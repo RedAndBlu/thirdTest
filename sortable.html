@@ -1,0 +1,148 @@
+<html>
+<head>
+  <meta name="viewpoint" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <style>
+    #sortContain{
+      box-sizing: border-box;
+      padding-top: 30px;
+      width: 300px;
+      height: 300px;
+      background-color: lightgray;
+      text-align: center;
+
+    }
+
+    #sortContain div{
+      box-sizing: border-box;
+      width: 200px;
+      padding-bottom: 5px;
+      padding-top: 5px;
+      background-color: gray;
+      margin: 10px auto 10px auto;
+    }
+
+    #draggable{
+      box-sizing: border-box;
+      width: 200px;
+      padding-bottom: 5px;
+      padding-top: 5px;
+      background-color: gray;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sortContain">
+    <div>foo</div>
+    <div>lyy</div>
+    <div>tii</div>
+    <div>zxx</div>
+    <div>edd</div>
+  </div>
+
+
+<script>
+
+  function onMouseStartDrag(event){
+    event.preventDefault();
+
+    // if it isn't a inner element of sortContain stop
+    if(!(event.target.id == "")){
+      return;
+    }
+
+    // clone the target and use the clone like a placeholher
+    // remove the placeholder on mouse up
+    let clone = event.target.cloneNode(true);
+    clone.style.setProperty("background-color", "white");
+    clone.style.setProperty("height", event.target.offsetHeight);
+    clone.innerHTML = "";
+    event.target.after(clone);
+
+
+    // liberate the target from the block and move it
+    // remove id, z.index and position sei here on mouseup
+    let targetDragged = event.target;
+    targetDragged.style.setProperty("z-index", 100);
+    targetDragged.style.setProperty("position", "absolute");
+    moveTarget(event.pageX, event.pageY);
+    targetDragged.id = "draggable";
+    document.body.append(targetDragged);
+
+    // set the sibling of the placeholder
+    let nextSibling = clone.nextElementSibling;
+    let previousSibling = clone.previousElementSibling;
+    console.log(nextSibling, previousSibling);
+
+
+    // move the targetDragged at x and y position under the mouse
+    function moveTarget(x, y){
+      let posX = Math.round(x - (targetDragged.offsetWidth / 2));
+      let posY = Math.round(y - (targetDragged.offsetHeight / 2));
+
+      targetDragged.style.setProperty("top", posY + "px" );
+      targetDragged.style.setProperty("left", posX + "px");
+    };
+
+    // after swap the placeHolder take the new siblings
+    function updateSibling(){
+      // let DraggedY = targetDragged.getBoundingClientRect().top;
+       nextSibling = clone.nextElementSibling;
+       previousSibling = clone.previousElementSibling;
+    };
+
+    function checkAndSwapplaceholder(){
+      let DraggedYpos = targetDragged.getBoundingClientRect().top;
+
+      if(nextSibling){
+        if(nextSibling.getBoundingClientRect().top < DraggedYpos){
+          nextSibling.after(clone);
+          updateSibling();
+          return;
+        }
+      }
+
+      if(previousSibling){
+        if(previousSibling.getBoundingClientRect().top > DraggedYpos){
+          previousSibling.before(clone);
+          updateSibling();
+          return;
+        }
+      }
+    };
+
+    // use the position under mousemouse event
+    // and control the position of the placeholder
+    function onMouseMove(event){
+      moveTarget(event.pageX, event.pageY);
+      checkAndSwapplaceholder();
+    };
+
+    // start to drag around
+    document.addEventListener("mousemove", onMouseMove);
+
+    // stop mousemove and mouseup event
+    // repostion the targetDragged on the placeholder
+    function onMouseUp(event){
+      document.removeEventListener("mousemove", onMouseMove);
+
+      // clear up
+      targetDragged.removeAttribute("id");
+      targetDragged.removeAttribute("style");
+      clone.after(targetDragged);
+      clone.remove();
+
+      targetDragged.removeEventListener("mouseup", onMouseUp);
+    };
+
+    // the end
+    targetDragged.addEventListener("mouseup", onMouseUp);
+  };
+
+  document.getElementById("sortContain").addEventListener("mousedown", onMouseStartDrag);
+
+</script>
+
+</body>
